@@ -13,6 +13,7 @@ import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import CoursesList from "@/pages/courses-list";
 import CourseDetail from "@/pages/course-detail";
+import Grades from "@/pages/grades";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { data: user, isLoading } = useUser();
@@ -53,6 +54,9 @@ function Router() {
       </Route>
       <Route path="/courses/:id">
         <ProtectedRoute component={CourseDetail} />
+      </Route>
+      <Route path="/grades">
+        <ProtectedRoute component={Grades} />
       </Route>
       <Route component={NotFound} />
     </Switch>
