@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { 
-  insertUserSchema, 
-  users, 
-  courses, 
-  insertCourseSchema, 
-  lessons, 
-  insertLessonSchema, 
-  assignments, 
+import {
+  insertUserSchema,
+  users,
+  courses,
+  insertCourseSchema,
+  lessons,
+  insertLessonSchema,
+  assignments,
   insertAssignmentSchema,
   submissions,
   insertSubmissionSchema,
@@ -95,6 +95,15 @@ export const api = {
         401: errorSchemas.unauthorized,
       },
     },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/courses/:id',
+      responses: {
+        200: z.object({ success: z.boolean() }),
+        401: errorSchemas.unauthorized,
+        404: errorSchemas.notFound,
+      },
+    },
   },
   lessons: {
     create: {
@@ -159,6 +168,112 @@ export const api = {
       path: '/api/enrollments',
       responses: {
         200: z.array(z.custom<typeof enrollments.$inferSelect & { course: typeof courses.$inferSelect }>()),
+      },
+    },
+    count: {
+      method: 'GET' as const,
+      path: '/api/courses/:courseId/enrollments/count',
+      responses: {
+        200: z.object({ count: z.number() }),
+      },
+    },
+  },
+  stats: {
+    student: {
+      method: 'GET' as const,
+      path: '/api/student/stats',
+      responses: {
+        200: z.object({ averageGrade: z.number(), upcomingAssignments: z.number() }),
+        401: errorSchemas.unauthorized,
+      },
+    },
+    instructor: {
+      method: 'GET' as const,
+      path: '/api/instructor/stats',
+      responses: {
+        200: z.object({ totalStudents: z.number() }),
+        401: errorSchemas.unauthorized,
+      },
+    },
+    studentSubmissions: {
+      method: 'GET' as const,
+      path: '/api/student/submissions',
+      responses: {
+        200: z.array(z.custom<typeof submissions.$inferSelect & { assignment: typeof assignments.$inferSelect }>()),
+        401: errorSchemas.unauthorized,
+      },
+    },
+  },
+  analytics: {
+    courseAnalytics: {
+      method: 'GET' as const,
+      path: '/api/courses/:courseId/analytics',
+      responses: {
+        200: z.object({
+          enrolledStudents: z.array(z.object({
+            id: z.number(),
+            name: z.string(),
+            username: z.string(),
+            enrolledAt: z.date().nullable(),
+          })),
+          totalEnrolled: z.number(),
+        }),
+        401: errorSchemas.unauthorized,
+      },
+    },
+    assignmentStats: {
+      method: 'GET' as const,
+      path: '/api/courses/:courseId/assignment-stats',
+      responses: {
+        200: z.object({
+          assignments: z.array(z.object({
+            id: z.number(),
+            title: z.string(),
+            dueDate: z.date().nullable(),
+            totalSubmissions: z.number(),
+            gradedSubmissions: z.number(),
+            averageGrade: z.number().nullable(),
+          })),
+        }),
+        401: errorSchemas.unauthorized,
+      },
+    },
+    instructorDashboard: {
+      method: 'GET' as const,
+      path: '/api/instructor/dashboard',
+      responses: {
+        200: z.object({
+          courses: z.array(z.object({
+            id: z.number(),
+            title: z.string(),
+            enrolledCount: z.number(),
+            assignmentCount: z.number(),
+            completionRate: z.number(),
+          })),
+          totalStudents: z.number(),
+          totalCourses: z.number(),
+        }),
+        401: errorSchemas.unauthorized,
+      },
+    },
+  },
+  upload: {
+    lessonFile: {
+      method: 'POST' as const,
+      path: '/api/lessons/:lessonId/upload',
+      responses: {
+        200: z.object({ fileUrl: z.string(), fileType: z.string() }),
+        400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
+      },
+    },
+    assignmentSubmission: {
+      method: 'POST' as const,
+      path: '/api/assignments/:assignmentId/submit-file',
+      responses: {
+        200: z.object({ fileUrl: z.string(), submissionId: z.number() }),
+        400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
       },
     },
   },

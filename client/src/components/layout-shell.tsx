@@ -1,13 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { useUser, useLogout } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  GraduationCap, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  BookOpen,
+  GraduationCap,
+  LogOut,
   Menu,
-  X
+  X,
+  BarChart3
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -23,6 +24,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     { label: "Courses", href: "/courses", icon: BookOpen },
     // Show Grades only for students
     ...(user?.role === "student" ? [{ label: "My Grades", href: "/grades", icon: GraduationCap }] : []),
+    // Show Analytics only for instructors
+    ...(user?.role === "instructor" ? [{ label: "Analytics", href: "/analytics", icon: BarChart3 }] : []),
   ];
 
   const Sidebar = () => (
@@ -33,18 +36,18 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           Academix
         </h1>
       </div>
-      
+
       <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.href;
           return (
             <Link key={item.href} href={item.href}>
-              <div 
+              <div
                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200
-                  ${isActive 
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
+                  ${isActive
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }
                 `}
@@ -68,8 +71,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
           </div>
         </div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/20"
           onClick={() => logout()}
         >

@@ -1,6 +1,7 @@
 import { useUser } from "@/hooks/use-auth";
 import { useCourses } from "@/hooks/use-courses";
 import { useEnrollments } from "@/hooks/use-enrollments";
+import { useStudentStats, useInstructorStats } from "@/hooks/use-stats";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -10,10 +11,12 @@ export default function Dashboard() {
   const { data: user } = useUser();
   const { data: courses = [] } = useCourses();
   const { data: enrollments = [] } = useEnrollments();
+  const { data: studentStats } = useStudentStats();
+  const { data: instructorStats } = useInstructorStats();
 
   // Instructor specific logic
   const myCreatedCourses = courses.filter(c => c.instructorId === user?.id);
-  
+
   // Student specific logic
   const myEnrolledCourses = enrollments.map(e => e.course);
 
@@ -29,7 +32,7 @@ export default function Dashboard() {
             Welcome back, {user.name}. Here's what's happening today.
           </p>
         </div>
-        
+
         {user.role === "instructor" && (
           <Link href="/courses">
             <Button className="gap-2 shadow-lg shadow-primary/20">
@@ -66,7 +69,7 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">--</div>
+              <div className="text-2xl font-bold">{instructorStats?.totalStudents ?? 0}</div>
               <p className="text-xs text-muted-foreground mt-1">Across all courses</p>
             </CardContent>
           </Card>
@@ -78,8 +81,8 @@ export default function Dashboard() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground mt-1">Due this week</p>
+            <div className="text-2xl font-bold">{user.role === "student" ? (studentStats?.upcomingAssignments ?? 0) : 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">{user.role === "student" ? "Due soon" : "Due this week"}</p>
           </CardContent>
         </Card>
 
@@ -90,8 +93,8 @@ export default function Dashboard() {
               <Trophy className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">92%</div>
-              <p className="text-xs text-muted-foreground mt-1">+2% from last month</p>
+              <div className="text-2xl font-bold">{studentStats?.averageGrade ?? 0}%</div>
+              <p className="text-xs text-muted-foreground mt-1">Based on graded submissions</p>
             </CardContent>
           </Card>
         )}
@@ -102,7 +105,7 @@ export default function Dashboard() {
         <h3 className="text-xl font-semibold tracking-tight">
           {user.role === "instructor" ? "Your Courses" : "My Learning"}
         </h3>
-        
+
         {((user.role === "instructor" ? myCreatedCourses : myEnrolledCourses).length === 0) ? (
           <Card className="bg-muted/20 border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-10 text-center">
@@ -111,7 +114,7 @@ export default function Dashboard() {
               </div>
               <h3 className="font-semibold text-lg">No courses yet</h3>
               <p className="text-sm text-muted-foreground max-w-sm mt-1 mb-4">
-                {user.role === "instructor" 
+                {user.role === "instructor"
                   ? "Get started by creating your first course content."
                   : "Explore the course catalog and enroll in a class."}
               </p>

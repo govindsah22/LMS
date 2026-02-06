@@ -52,6 +52,34 @@ export function useCreateCourse() {
   });
 }
 
+export function useDeleteCourse() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (courseId: number) => {
+      const url = buildUrl(api.courses.delete.path, { id: courseId });
+      const res = await fetch(url, {
+        method: api.courses.delete.method,
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to delete course");
+      }
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.courses.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.stats.instructor.path] });
+      toast({ title: "Success", description: "Course deleted successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message || "Failed to delete course", variant: "destructive" });
+    },
+  });
+}
+
 export function useCreateLesson() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -88,12 +116,44 @@ export function useCreateAssignment() {
         body: JSON.stringify(data),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to create assignment");
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to create assignment");
+      }
       return api.assignments.create.responses[201].parse(await res.json());
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [api.courses.get.path, variables.courseId] });
       toast({ title: "Success", description: "Assignment created successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message || "Failed to create assignment", variant: "destructive" });
+    },
+  });
+}
+
+export function useDeleteLesson() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ lessonId, courseId }: { lessonId: number; courseId: number }) => {
+      const res = await fetch(`/api/lessons/${lessonId}`, {
+        method: 'DELETE',
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to delete lesson");
+      }
+      return { courseId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [api.courses.get.path, data.courseId] });
+      toast({ title: "Success", description: "Lesson deleted successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message || "Failed to delete lesson", variant: "destructive" });
     },
   });
 }

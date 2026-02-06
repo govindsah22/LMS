@@ -50,6 +50,7 @@ export const submissions = pgTable("submissions", {
   assignmentId: integer("assignment_id").notNull(),
   studentId: integer("student_id").notNull(),
   content: text("content"), // Student's submission text or link
+  fileUrl: text("file_url"), // Uploaded file path
   grade: integer("grade"), // 0-100 or similar
   feedback: text("feedback"),
   submittedAt: timestamp("submitted_at").defaultNow(),
