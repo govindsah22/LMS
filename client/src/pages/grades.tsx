@@ -1,10 +1,10 @@
 import { useEnrollments } from "@/hooks/use-enrollments";
-import { useSubmissions } from "@/hooks/use-submissions";
+import { useStudentSubmissions } from "@/hooks/use-stats";
 import { useCourses } from "@/hooks/use-courses";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, BookOpen, Clock } from "lucide-react";
+import { GraduationCap, BookOpen, Clock, CheckCircle } from "lucide-react";
 
 export default function Grades() {
   const { data: enrollments, isLoading: enrollmentsLoading } = useEnrollments();
@@ -49,7 +49,7 @@ export default function Grades() {
                 </div>
               </CardHeader>
               <CardContent className="pt-4">
-                 <CourseGrades courseId={enrollment.courseId} />
+                <CourseGrades courseId={enrollment.courseId} />
               </CardContent>
             </Card>
           );
@@ -68,14 +68,37 @@ export default function Grades() {
 }
 
 function CourseGrades({ courseId }: { courseId: number }) {
-  // In a real app, we'd fetch submissions per course, but here we can filter or use a specific hook
-  const { data: submissions, isLoading } = useSubmissions(); 
-  
-  // Filtering for local demo, though a dedicated hook/api would be better
-  // We'd need assignment information to link submissions to courses properly
-  // For now, showing a placeholder table if submissions exist
-  
-  if (isLoading) return <div className="h-20 bg-muted animate-spin rounded-md" />;
+  const { data: submissions, isLoading } = useStudentSubmissions();
+
+  // Filter submissions for this course
+  const courseSubmissions = submissions?.filter(
+    (sub: any) => sub.assignment?.courseId === courseId
+  );
+
+  if (isLoading) return <div className="h-20 bg-muted animate-pulse rounded-md" />;
+
+  if (!courseSubmissions || courseSubmissions.length === 0) {
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Assignment</TableHead>
+            <TableHead>Submitted At</TableHead>
+            <TableHead>Grade</TableHead>
+            <TableHead>Feedback</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+              <Clock className="w-4 h-4 inline mr-2" />
+              No submissions yet for this course
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    );
+  }
 
   return (
     <Table>
@@ -88,12 +111,25 @@ function CourseGrades({ courseId }: { courseId: number }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <TableRow>
-          <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
-             <Clock className="w-4 h-4 inline mr-2" />
-             Detailed assignment grades available in Course Details
-          </TableCell>
-        </TableRow>
+        {courseSubmissions.map((sub: any) => (
+          <TableRow key={sub.id}>
+            <TableCell className="font-medium">{sub.assignment?.title || 'Assignment'}</TableCell>
+            <TableCell>{new Date(sub.submittedAt).toLocaleDateString()}</TableCell>
+            <TableCell>
+              {sub.grade !== null ? (
+                <Badge variant={sub.grade >= 60 ? "default" : "destructive"} className="gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  {sub.grade}/100
+                </Badge>
+              ) : (
+                <Badge variant="secondary">Pending</Badge>
+              )}
+            </TableCell>
+            <TableCell className="max-w-xs truncate">
+              {sub.feedback || <span className="text-muted-foreground">-</span>}
+            </TableCell>
+          </TableRow>
+        ))}
       </TableBody>
     </Table>
   );
